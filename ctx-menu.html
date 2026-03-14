@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  background: transparent !important;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  width: 222px;
+  height: 260px;
+  user-select: none;
+}
+
+#menu {
+  position: absolute;
+  top: 4px; left: 4px;
+  width: 210px;
+  background: var(--bg, rgba(19,19,31,.96));
+  backdrop-filter: blur(24px) saturate(1.8);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  border: 1px solid var(--border, rgba(255,255,255,.13));
+  border-radius: 14px;
+  padding: 6px;
+  box-shadow:
+    0 4px 6px rgba(0,0,0,.12),
+    0 12px 28px rgba(0,0,0,.35),
+    0 32px 64px rgba(0,0,0,.45),
+    0 0 0 0.5px rgba(255,255,255,.06) inset;
+  animation: in .13s cubic-bezier(.16,1,.3,1);
+}
+
+@keyframes in {
+  from { opacity:0; transform:scale(.94) translateY(-3px); }
+  to   { opacity:1; transform:none; }
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  cursor: pointer;
+  color: var(--text, #eef0f8);
+  transition: background .08s;
+  white-space: nowrap;
+}
+.item:hover { background: var(--hover, rgba(255,255,255,.08)); }
+.item .icon { font-size: 13px; width: 16px; text-align: center; }
+.item.danger { color: #f87171; }
+.item.danger:hover { background: rgba(248,113,113,.13); }
+.item.disabled { opacity: .32; cursor: default; pointer-events: none; }
+.sep { height: 1px; background: var(--border, rgba(255,255,255,.1)); margin: 4px 0; }
+</style>
+</head>
+<body>
+<div id="menu">
+  <div class="item" data-a="new-tab">    <span class="icon">＋</span>Nouvel onglet</div>
+  <div class="item" data-a="duplicate">  <span class="icon">⧉</span>Dupliquer</div>
+  <div class="item" data-a="reload">     <span class="icon">↻</span>Recharger</div>
+  <div class="sep"></div>
+  <div class="item" data-a="suspend">    <span class="icon">💤</span>Libérer la RAM</div>
+  <div class="sep"></div>
+  <div class="item danger" data-a="close">        <span class="icon">✕</span>Fermer</div>
+  <div class="item danger" data-a="close-others"> <span class="icon">🗑</span>Fermer les autres</div>
+</div>
+
+<script>
+const { ipcRenderer } = require('electron');
+
+const THEMES = {
+  dark:     { bg:'rgba(19,19,31,.96)',    border:'rgba(255,255,255,.13)', text:'#eef0f8', hover:'rgba(255,255,255,.08)' },
+  light:    { bg:'rgba(240,242,250,.97)', border:'rgba(0,0,0,.13)',       text:'#1a1a2e', hover:'rgba(0,0,0,.06)' },
+  midnight: { bg:'rgba(8,8,22,.96)',      border:'rgba(100,100,255,.18)', text:'#eef0f8', hover:'rgba(255,255,255,.08)' },
+  forest:   { bg:'rgba(8,20,10,.96)',     border:'rgba(80,200,80,.18)',   text:'#eef0f8', hover:'rgba(255,255,255,.08)' },
+  ocean:    { bg:'rgba(5,18,32,.96)',     border:'rgba(0,150,255,.18)',   text:'#eef0f8', hover:'rgba(255,255,255,.08)' },
+  rose:     { bg:'rgba(25,10,20,.96)',    border:'rgba(255,100,150,.18)', text:'#eef0f8', hover:'rgba(255,255,255,.08)' },
+};
+
+// Recevoir les données à chaque ouverture du menu
+ipcRenderer.on('ctx-init', (_, { theme, hasUrl, tabCount }) => {
+  // Appliquer le thème
+  const t = THEMES[theme] || THEMES.dark;
+  document.documentElement.style.setProperty('--bg',     t.bg);
+  document.documentElement.style.setProperty('--border', t.border);
+  document.documentElement.style.setProperty('--text',   t.text);
+  document.documentElement.style.setProperty('--hover',  t.hover);
+
+  // Réinitialiser tous les items
+  document.querySelectorAll('.item').forEach(i => i.classList.remove('disabled'));
+
+  // Griser selon l'état
+  if (!hasUrl) {
+    ['reload','duplicate','suspend'].forEach(a =>
+      document.querySelector('[data-a="'+a+'"]').classList.add('disabled')
+    );
+  }
+  if (tabCount <= 1) {
+    document.querySelector('[data-a="close-others"]').classList.add('disabled');
+  }
+
+  // Relancer l'animation d'entrée
+  const menu = document.getElementById('menu');
+  menu.style.animation = 'none';
+  void menu.offsetHeight;
+  menu.style.animation = '';
+});
+
+// Clic sur un item
+document.querySelectorAll('.item').forEach(item => {
+  item.addEventListener('mousedown', e => {
+    e.stopPropagation();
+    if (item.classList.contains('disabled')) return;
+    ipcRenderer.send('ctx-menu-action', item.dataset.a);
+  });
+});
+
+// Clic en dehors (zone transparente) — on utilise mousedown pour être plus réactif
+document.addEventListener('mousedown', e => {
+  const menu = document.getElementById('menu');
+  if (!menu.contains(e.target)) {
+    ipcRenderer.send('ctx-menu-action', null);
+  }
+});
+</script>
+</body>
+</html>

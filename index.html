@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Novyss</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══════════════════════════════════════════════════ -->
+<aside id="sidebar">
+  <div id="sb-top">
+    <div id="win-controls" data-style="mac">
+      <span class="wc wc-close" id="btn-close"  title="Fermer"></span>
+      <span class="wc wc-min"   id="btn-min"    title="Réduire"></span>
+      <span class="wc wc-max"   id="btn-max"    title="Agrandir"></span>
+    </div>
+    <div id="space-label"><span id="novyss-logo">✦</span> Novyss</div>
+  </div>
+
+  <div id="tabs-list"></div>
+
+  <div id="sb-bottom">
+    <button class="sb-btn" id="btn-new-tab">
+      <span class="sb-icon">＋</span> Nouvel onglet
+    </button>
+    <button class="sb-btn" id="btn-history">
+      <span class="sb-icon">🕐</span> Historique
+    </button>
+    <button class="sb-btn" id="btn-bookmarks">
+      <span class="sb-icon">⭐</span> Favoris
+    </button>
+    <button class="sb-btn" id="btn-vault">
+      <span class="sb-icon">🔑</span> Mots de passe
+    </button>
+    <button class="sb-btn" id="btn-settings">
+      <span class="sb-icon">⚙️</span> Paramètres
+    </button>
+  </div>
+</aside>
+
+<!-- ══ MAIN ═════════════════════════════════════════════════════ -->
+<main id="main">
+  <div id="topbar">
+    <button id="btn-sidebar-toggle" title="Afficher/Cacher la sidebar (Alt+Z)">☰</button>
+    <button id="btn-back"    disabled title="Précédent">◀</button>
+    <button id="btn-forward" disabled title="Suivant">▶</button>
+    <button id="btn-reload"  title="Recharger">↻</button>
+    <div id="url-wrap">
+      <span id="url-lock">🔒</span>
+      <input id="url-input" type="text"
+             placeholder="Rechercher ou entrer une URL…"
+             autocomplete="off" spellcheck="false">
+    </div>
+    <button id="btn-adblock" title="Adblock">🛡</button>
+    <button id="btn-translate" title="Traduire la page">🌐</button>
+    <button id="btn-bookmark" title="Ajouter aux favoris">☆</button>
+    <div id="progress-bar"><div id="progress-fill"></div></div>
+  </div>
+
+  <!-- ── Page d'accueil ──────────────────────────────────────── -->
+  <div id="home">
+    <div id="home-wallpaper"></div>
+    <video id="home-video-bg" style="display:none" autoplay muted loop playsinline></video>
+    <div id="home-dim" style="opacity:0"></div>
+    <div id="home-inner">
+      <div id="home-time"></div>
+      <div id="home-date"></div>
+
+      <div id="home-search-wrap">
+        <span id="home-search-lock">🔍</span>
+        <input id="home-search-input" type="text"
+               placeholder="Rechercher ou entrer une URL…"
+               autocomplete="off" spellcheck="false">
+        <button id="home-search-btn">→</button>
+      </div>
+
+      <div id="bookmarks-bar" style="display:none">
+        <div id="bookmarks-bar-inner"></div>
+      </div>
+      <div id="quick-links">
+        <!-- rempli dynamiquement par app.js -->
+      </div>
+
+      <!-- Raccourcis navigation rapide -->
+      <div id="home-shortcuts">
+        <button class="home-sc-btn" id="sc-history"   title="Historique (Alt+H)">🕐 Historique</button>
+        <button class="home-sc-btn" id="sc-bookmarks" title="Favoris (Alt+B)">⭐ Favoris</button>
+        <button class="home-sc-btn" id="sc-vault"     title="Mots de passe (Alt+V)">🔑 Mots de passe</button>
+        <button class="home-sc-btn" id="sc-settings"  title="Paramètres (Alt+S)">⚙️ Paramètres</button>
+      </div>
+
+      <!-- Popup édition raccourci -->
+      <div id="ql-edit-popup" style="display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);">
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:24px;width:300px;display:flex;flex-direction:column;gap:12px;box-shadow:0 16px 48px rgba(0,0,0,.6)">
+          <div style="font-weight:700;font-size:15px" id="ql-edit-title">Modifier le raccourci</div>
+          <input id="ql-edit-name" type="text" placeholder="Nom (ex: YouTube)" class="setting-input">
+          <input id="ql-edit-url"  type="text" placeholder="URL (ex: https://youtube.com)" class="setting-input">
+          <input id="ql-edit-icon" type="text" placeholder="Icône (emoji ou lettre, ex: ▶)" class="setting-input">
+          <div style="display:flex;gap:8px;margin-top:4px">
+            <button id="ql-edit-cancel" class="ghost-btn" style="flex:1">Annuler</button>
+            <button id="ql-edit-save"   class="primary-btn" style="flex:1">Enregistrer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Barre de téléchargements -->
+  <div id="download-bar" class="hidden">
+    <div id="download-bar-header">
+      <span style="font-size:12px;font-weight:600">📥 Téléchargements</span>
+      <button id="download-bar-close" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:14px">✕</button>
+    </div>
+    <div id="download-list"></div>
+  </div>
+
+  <!-- Popup navigateur externe (YouTube/Netflix etc) -->
+  <div id="ext-browser-popup" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:10000;align-items:center;justify-content:center;">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:24px;width:340px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 60px rgba(0,0,0,.8)">
+      <div style="font-size:15px;font-weight:700" id="ext-popup-title">Ouvrir dans quel navigateur ?</div>
+      <div style="font-size:12px;color:var(--text2);word-break:break-all" id="ext-popup-url"></div>
+      <!-- Liste des navigateurs détectés (remplie dynamiquement) -->
+      <div id="ext-browser-list" style="display:flex;flex-direction:column;gap:6px"></div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:2px;border-top:1px solid var(--border);padding-top:10px">
+        <button id="ext-popup-novyss" class="ghost-btn" style="width:100%;font-size:12px">▶ Rester dans Novyss</button>
+        <button id="ext-popup-cancel" class="ghost-btn" style="width:100%;font-size:12px;color:var(--text2)">Annuler</button>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text2);cursor:pointer">
+        <input type="checkbox" id="ext-popup-remember"> Ne plus demander pour ce site
+      </label>
+    </div>
+  </div>
+
+  <!-- Popup détection mot de passe -->
+  <div id="pwd-detect-popup" style="display:none;position:fixed;bottom:80px;right:24px;z-index:9999;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px 18px;width:300px;box-shadow:0 8px 32px rgba(0,0,0,.5);flex-direction:column;gap:10px">
+    <div style="font-size:13px;font-weight:600">🔑 Identifiants détectés</div>
+    <div style="font-size:12px;color:var(--text2)" id="pwd-detect-site"></div>
+    <div style="font-size:12px;color:var(--text2)" id="pwd-detect-user"></div>
+    <div style="display:flex;gap:8px">
+      <button id="pwd-detect-save"   class="primary-btn" style="flex:1;font-size:11px">💾 Sauvegarder</button>
+      <button id="pwd-detect-fill"   class="ghost-btn"   style="flex:1;font-size:11px">✏️ Remplir</button>
+      <button id="pwd-detect-ignore" class="ghost-btn"   style="flex:1;font-size:11px">Ignorer</button>
+    </div>
+  </div>
+
+  <!-- Bannière mise à jour globale -->
+  <div id="update-notif" class="update-notif hidden">
+    <span id="update-notif-text">🎉 Nouvelle version de Novyss disponible !</span>
+    <button id="btn-update-notif" class="update-notif-btn">Voir</button>
+    <button id="btn-update-notif-close" class="update-notif-close">✕</button>
+  </div>
+</main>
+
+<!-- ══ OVERLAY ══════════════════════════════════════════════════ -->
+<div id="overlay" class="hidden"></div>
+<div id="ctx-overlay"></div>
+
+<!-- ══ PANEL : FAVORIS ══════════════════════════════════════════ -->
+<div id="panel-bookmarks" class="side-panel hidden">
+  <div class="panel-hdr">
+    <span>⭐ Favoris</span>
+    <div style="display:flex;gap:6px;align-items:center">
+      <button class="icon-btn" id="btn-bookmark-add" title="Ajouter manuellement">＋</button>
+      <button class="panel-close" id="close-bookmarks">✕</button>
+    </div>
+  </div>
+  <div class="panel-search">
+    <input id="bookmark-search" type="text" placeholder="Rechercher…">
+  </div>
+  <div id="bookmark-list"></div>
+</div>
+
+<!-- ══ PANEL : BOOKMARK FORM ════════════════════════════════════ -->
+<div id="panel-bookmark-form" class="side-panel hidden">
+  <div class="panel-hdr">
+    <span id="bookmark-form-title">Ajouter un favori</span>
+    <button class="panel-close" id="close-bookmark-form">✕</button>
+  </div>
+  <div class="panel-body">
+    <label class="setting-label">Nom</label>
+    <input type="text" id="bm-name" placeholder="Mon site" class="setting-input">
+    <label class="setting-label" style="margin-top:12px">URL</label>
+    <input type="text" id="bm-url" placeholder="https://…" class="setting-input">
+    <label class="setting-label" style="margin-top:12px">
+      <input type="checkbox" id="bm-pinned"> Épingler sur la page d'accueil
+    </label>
+    <div style="display:flex;gap:8px;margin-top:20px">
+      <button class="primary-btn" id="btn-bm-save">Enregistrer</button>
+      <button class="ghost-btn"   id="btn-bm-cancel">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PANEL : HISTORIQUE ═══════════════════════════════════════ -->
+<div id="panel-history" class="side-panel hidden">
+  <div class="panel-hdr">
+    <span>🕐 Historique</span>
+    <button class="panel-close" id="close-history">✕</button>
+  </div>
+  <div class="panel-search">
+    <input id="history-search" type="text" placeholder="Rechercher…">
+  </div>
+  <div id="history-list"></div>
+  <div class="panel-footer">
+    <button class="danger-btn" id="btn-clear-history">🗑 Effacer tout</button>
+  </div>
+</div>
+
+<!-- ══ PANEL : PARAMÈTRES ═══════════════════════════════════════ -->
+<div id="panel-settings" class="side-panel hidden">
+  <div class="panel-hdr">
+    <span>⚙️ Paramètres</span>
+    <button class="panel-close" id="close-settings">✕</button>
+  </div>
+  <div class="panel-body">
+
+    <!-- Style boutons fenêtre -->
+    <div class="sg">
+      <div class="sg-title">🖥 Style des boutons fenêtre</div>
+      <div class="wc-style-row">
+        <button class="wc-style-btn active" data-wc="mac">
+          <div class="wc-preview-mac">
+            <span class="wcp" style="background:#ff5f57"></span>
+            <span class="wcp" style="background:#febc2e"></span>
+            <span class="wcp" style="background:#28c840"></span>
+          </div>
+          <span>macOS</span>
+        </button>
+        <button class="wc-style-btn" data-wc="windows">
+          <div class="wc-preview-win">
+            <span>─</span><span>□</span><span>✕</span>
+          </div>
+          <span>Windows</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Horloge -->
+    <div class="sg">
+      <div class="sg-title">🕐 Horloge</div>
+      <div class="toggle-row">
+        <span>Afficher les secondes</span>
+        <label class="toggle">
+          <input type="checkbox" id="clock-seconds" checked>
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div class="sg-sep"></div>
+      <div class="setting-label" style="margin-bottom:6px">Fuseau horaire</div>
+      <select id="settings-timezone">
+        <option value="local">🌍 Heure locale</option>
+        <optgroup label="🌍 Europe">
+          <option value="Europe/Paris">🇫🇷 Paris</option>
+          <option value="Europe/London">🇬🇧 Londres</option>
+          <option value="Europe/Berlin">🇩🇪 Berlin</option>
+          <option value="Europe/Madrid">🇪🇸 Madrid</option>
+          <option value="Europe/Rome">🇮🇹 Rome</option>
+          <option value="Europe/Moscow">🇷🇺 Moscou</option>
+        </optgroup>
+        <optgroup label="🌎 Amériques">
+          <option value="America/New_York">🇺🇸 New York</option>
+          <option value="America/Los_Angeles">🇺🇸 Los Angeles</option>
+          <option value="America/Chicago">🇺🇸 Chicago</option>
+          <option value="America/Toronto">🇨🇦 Toronto</option>
+          <option value="America/Sao_Paulo">🇧🇷 São Paulo</option>
+          <option value="America/Mexico_City">🇲🇽 Mexico</option>
+        </optgroup>
+        <optgroup label="🌏 Asie &amp; Océanie">
+          <option value="Asia/Tokyo">🇯🇵 Tokyo</option>
+          <option value="Asia/Shanghai">🇨🇳 Shanghai</option>
+          <option value="Asia/Seoul">🇰🇷 Séoul</option>
+          <option value="Asia/Dubai">🇦🇪 Dubaï</option>
+          <option value="Asia/Kolkata">🇮🇳 Mumbai</option>
+          <option value="Asia/Singapore">🇸🇬 Singapour</option>
+          <option value="Australia/Sydney">🇦🇺 Sydney</option>
+        </optgroup>
+        <optgroup label="🌍 Afrique &amp; M-O">
+          <option value="Africa/Cairo">🇪🇬 Le Caire</option>
+          <option value="Africa/Casablanca">🇲🇦 Casablanca</option>
+          <option value="Africa/Johannesburg">🇿🇦 Johannesburg</option>
+          <option value="Asia/Riyadh">🇸🇦 Riyad</option>
+        </optgroup>
+      </select>
+    </div>
+
+    <!-- Couleur accent -->
+    <div class="sg">
+      <div class="sg-title">🎨 Couleur accent</div>
+      <div id="accent-swatches">
+        <button class="swatch active" data-color="#a78bfa" style="background:#a78bfa" title="Violet"></button>
+        <button class="swatch" data-color="#818cf8" style="background:#818cf8" title="Indigo"></button>
+        <button class="swatch" data-color="#60a5fa" style="background:#60a5fa" title="Bleu clair"></button>
+        <button class="swatch" data-color="#38bdf8" style="background:#38bdf8" title="Ciel"></button>
+        <button class="swatch" data-color="#2dd4bf" style="background:#2dd4bf" title="Teal"></button>
+        <button class="swatch" data-color="#34d399" style="background:#34d399" title="Vert"></button>
+        <button class="swatch" data-color="#a3e635" style="background:#a3e635" title="Lime"></button>
+        <button class="swatch" data-color="#fbbf24" style="background:#fbbf24" title="Jaune"></button>
+        <button class="swatch" data-color="#fb923c" style="background:#fb923c" title="Orange"></button>
+        <button class="swatch" data-color="#f87171" style="background:#f87171" title="Rouge"></button>
+        <button class="swatch" data-color="#f472b6" style="background:#f472b6" title="Rose"></button>
+        <button class="swatch" data-color="#e879f9" style="background:#e879f9" title="Fuchsia"></button>
+        <button class="swatch" data-color="#c084fc" style="background:#c084fc" title="Mauve"></button>
+        <button class="swatch" data-color="#94a3b8" style="background:#94a3b8" title="Ardoise"></button>
+        <button class="swatch" data-color="#ffffff" style="background:#ffffff" title="Blanc"></button>
+        <label class="swatch swatch-custom" title="Couleur personnalisée" id="swatch-custom-label">
+          <span>＋</span>
+          <input type="color" id="accent-custom" value="#a78bfa" style="opacity:0;position:absolute;width:0;height:0;">
+        </label>
+      </div>
+    </div>
+
+    <!-- Thème -->
+    <div class="sg">
+      <div class="sg-title">🌙 Thème</div>
+      <div id="theme-btns">
+        <button class="theme-btn active" data-theme="dark">🌙 Sombre</button>
+        <button class="theme-btn" data-theme="light">☀️ Clair</button>
+        <button class="theme-btn" data-theme="midnight">🌌 Minuit</button>
+        <button class="theme-btn" data-theme="forest">🌿 Forêt</button>
+        <button class="theme-btn" data-theme="ocean">🌊 Océan</button>
+        <button class="theme-btn" data-theme="rose">🌸 Rose</button>
+      </div>
+    </div>
+
+    <!-- Couleur sidebar -->
+    <div class="sg">
+      <div class="sg-title">🎨 Couleur de la sidebar</div>
+      <div id="sb-color-presets" style="display:flex;flex-wrap:wrap;gap:7px;margin-top:4px">
+        <button class="sb-color-btn active" data-sbc="default" title="Défaut" style="background:var(--bg2);border:2px solid var(--accent);font-size:10px">auto</button>
+        <button class="sb-color-btn" data-sbc="transparent" title="Transparent" style="background:repeating-conic-gradient(#888 0% 25%,#ccc 0% 50%) 0 0/10px 10px" title="Transparent">○</button>
+        <!-- Noirs / gris -->
+        <button class="sb-color-btn" data-sbc="#000000" title="Noir pur"        style="background:#000"></button>
+        <button class="sb-color-btn" data-sbc="#0d0d0d" title="Noir doux"       style="background:#0d0d0d"></button>
+        <button class="sb-color-btn" data-sbc="#1c1c1e" title="Gris sombre"     style="background:#1c1c1e"></button>
+        <button class="sb-color-btn" data-sbc="#2c2c2e" title="Gris moyen"      style="background:#2c2c2e"></button>
+        <button class="sb-color-btn" data-sbc="#ffffff" title="Blanc"           style="background:#fff;border:1px solid #ccc"></button>
+        <!-- Bleus / nuit -->
+        <button class="sb-color-btn" data-sbc="#0a1628" title="Bleu nuit"       style="background:#0a1628"></button>
+        <button class="sb-color-btn" data-sbc="#0d1b2a" title="Bleu marine"     style="background:#0d1b2a"></button>
+        <button class="sb-color-btn" data-sbc="#1a2744" title="Bleu acier"      style="background:#1a2744"></button>
+        <button class="sb-color-btn" data-sbc="#0c2340" title="Bleu profond"    style="background:#0c2340"></button>
+        <button class="sb-color-btn" data-sbc="#1e3a5f" title="Bleu cobalt"     style="background:#1e3a5f"></button>
+        <!-- Violets -->
+        <button class="sb-color-btn" data-sbc="#1a0533" title="Violet foncé"    style="background:#1a0533"></button>
+        <button class="sb-color-btn" data-sbc="#2d1b69" title="Indigo"          style="background:#2d1b69"></button>
+        <button class="sb-color-btn" data-sbc="#3b0764" title="Violet roi"      style="background:#3b0764"></button>
+        <button class="sb-color-btn" data-sbc="#4a0080" title="Violet vif"      style="background:#4a0080"></button>
+        <!-- Verts -->
+        <button class="sb-color-btn" data-sbc="#0a2a0a" title="Vert forêt"      style="background:#0a2a0a"></button>
+        <button class="sb-color-btn" data-sbc="#0d2b1a" title="Vert sapin"      style="background:#0d2b1a"></button>
+        <button class="sb-color-btn" data-sbc="#14532d" title="Vert émeraude"   style="background:#14532d"></button>
+        <!-- Rouges / bordeaux -->
+        <button class="sb-color-btn" data-sbc="#1a0a0a" title="Rouge sombre"    style="background:#1a0a0a"></button>
+        <button class="sb-color-btn" data-sbc="#3b0000" title="Bordeaux"        style="background:#3b0000"></button>
+        <button class="sb-color-btn" data-sbc="#4a0010" title="Bordeaux vif"    style="background:#4a0010"></button>
+        <!-- Marron / café -->
+        <button class="sb-color-btn" data-sbc="#1a0f00" title="Café"            style="background:#1a0f00"></button>
+        <button class="sb-color-btn" data-sbc="#2d1a00" title="Caramel sombre"  style="background:#2d1a00"></button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+        <span style="font-size:12px">Personnalisé</span>
+        <input type="color" id="sb-color-custom" value="#0d0d1a" style="width:36px;height:28px;border:none;border-radius:6px;cursor:pointer;background:none">
+      </div>
+      <div class="toggle-row" style="margin-top:8px">
+        <span style="font-size:12px">Opacité</span>
+        <input type="range" id="sb-opacity" min="0" max="100" value="100" style="width:110px">
+      </div>
+    </div>
+
+    <!-- Intensité verre -->
+    <div class="sg">
+      <div class="sg-title">✨ Intensité du verre</div>
+      <div class="slider-wrap">
+        <input type="range" id="glass-slider" min="0" max="100" value="60" class="slider">
+        <span id="glass-value">60%</span>
+      </div>
+    </div>
+
+    <!-- Moteur de recherche -->
+    <div class="sg">
+      <div class="sg-title">🔍 Moteur de recherche</div>
+      <select id="search-engine" class="setting-select">
+        <option value="https://www.google.com/search?q=">Google</option>
+        <option value="https://duckduckgo.com/?q=">DuckDuckGo</option>
+        <option value="https://www.bing.com/search?q=">Bing</option>
+        <option value="https://search.brave.com/search?q=">Brave</option>
+      </select>
+    </div>
+
+    <!-- Page d'accueil -->
+    <div class="sg">
+      <div class="sg-title">🏠 Page d'accueil</div>
+      <input type="text" id="homepage-input" placeholder="https://…" class="setting-input">
+    </div>
+
+    <!-- Fond d'écran -->
+    <div class="sg">
+      <div class="sg-title">🖼 Fond d'écran</div>
+
+      <!-- Dégradés preset -->
+      <div id="wallpaper-presets" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+        <button class="wp-btn active" data-wp="none"       title="Aucun">✕</button>
+        <button class="wp-btn" data-wp="gradient1" title="Violet nuit"  style="background:linear-gradient(135deg,#0f0c29,#302b63,#24243e)"></button>
+        <button class="wp-btn" data-wp="gradient2" title="Aurora"       style="background:linear-gradient(135deg,#0d324d,#7f5a83)"></button>
+        <button class="wp-btn" data-wp="gradient3" title="Minuit"       style="background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)"></button>
+        <button class="wp-btn" data-wp="gradient4" title="Forêt"        style="background:linear-gradient(135deg,#0a3d0a,#1a5c1a,#0d2b0d)"></button>
+        <button class="wp-btn" data-wp="gradient5" title="Océan"        style="background:linear-gradient(135deg,#0c1a4a,#1a3a6a,#0a2a5a)"></button>
+        <button class="wp-btn" data-wp="gradient6" title="Coucher"      style="background:linear-gradient(135deg,#1a0533,#6b1a3a,#c0392b)"></button>
+        <button class="wp-btn" data-wp="gradient7" title="Or"           style="background:linear-gradient(135deg,#1a1000,#3d2b00,#7d5a00)"></button>
+      </div>
+
+      <!-- Galerie perso -->
+      <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Mes fonds personnalisés</div>
+      <div id="wp-gallery-grid"></div>
+
+      <!-- Boutons ajouter -->
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button class="ghost-btn" id="btn-wp-add-image" style="flex:1;font-size:12px">🖼 + Image</button>
+        <button class="ghost-btn" id="btn-wp-add-video" style="flex:1;font-size:12px">🎬 + Vidéo</button>
+      </div>
+      <input type="file" id="wp-file-input"  accept="image/*" multiple style="display:none">
+      <input type="file" id="wp-video-input" accept="video/mp4,video/webm" multiple style="display:none">
+
+      <!-- Slider assombrissement -->
+      <div class="toggle-row" style="margin-top:10px">
+        <span style="font-size:12px">Assombrir le fond</span>
+        <input type="range" id="wp-dim" min="0" max="80" value="40" style="width:100px">
+      </div>
+    </div>
+
+    <!-- Adblock -->
+    <div class="sg">
+      <div class="sg-title">🛡 Adblock</div>
+      <div class="toggle-row">
+        <span>Blocage des publicités</span>
+        <label class="toggle">
+          <input type="checkbox" id="adblock-toggle" checked>
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+    </div>
+
+        <!-- Polices d'écriture -->
+    <div class="sg">
+      <div class="sg-title">🔤 Police d'écriture</div>
+      <select id="font-select" class="setting-input" style="width:100%;margin-bottom:6px">
+        <option value="">Système (défaut)</option>
+        <option value="Inter">Inter</option>
+        <option value="Roboto">Roboto</option>
+        <option value="Poppins">Poppins</option>
+        <option value="Nunito">Nunito</option>
+        <option value="Raleway">Raleway</option>
+        <option value="Fira Sans">Fira Sans</option>
+        <option value="JetBrains Mono">JetBrains Mono</option>
+        <option value="Source Code Pro">Source Code Pro</option>
+      </select>
+      <div id="font-preview" style="font-size:13px;color:var(--text2);padding:8px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
+        Aperçu : Novyss Browser 0123
+      </div>
+    </div>
+
+    <!-- Sons de touche clavier -->
+    <div class="sg">
+      <div class="sg-title">🎹 Sons de touche</div>
+      <div class="toggle-row">
+        <span>Activer les sons</span>
+        <label class="toggle">
+          <input type="checkbox" id="keysound-toggle">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div id="keysound-options" style="display:none;margin-top:10px;display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:2px">Style</div>
+        <select id="keysound-style" class="setting-input" style="width:100%">
+          <option value="creamy">Creamy (doux/grave)</option>
+          <option value="mechanical">Mécanique</option>
+          <option value="soft">Soft click</option>
+        </select>
+        <div class="toggle-row" style="margin-top:4px">
+          <span style="font-size:12px">Volume</span>
+          <input type="range" id="keysound-volume" min="1" max="100" value="40" style="width:100px">
+        </div>
+        <button id="keysound-test" class="ghost-btn" style="font-size:12px">▶ Tester</button>
+      </div>
+    </div>
+
+    <!-- Redirection YouTube/Netflix -->
+    <div class="sg">
+      <div class="sg-title">🌐 Sites spéciaux</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Demander le navigateur à utiliser pour ces sites</div>
+      <div id="ext-sites-list" style="display:flex;flex-direction:column;gap:6px">
+        <!-- rempli dynamiquement -->
+      </div>
+      <button id="btn-add-ext-site" class="ghost-btn" style="width:100%;font-size:12px;margin-top:8px">＋ Ajouter un site</button>
+    </div>
+
+    <!-- Mode performance -->
+    <div class="sg">
+      <div class="sg-title">⚡ Performance</div>
+      <div class="toggle-row">
+        <span>🎮 Mode Gaming</span>
+        <label class="toggle">
+          <input type="checkbox" id="gaming-mode-toggle">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div id="gaming-mode-desc" style="font-size:11px;color:var(--text2);margin-top:6px;line-height:1.5;display:none">
+        ✓ Animations désactivées<br>
+        ✓ Onglets en arrière-plan suspendus<br>
+        ✓ Effets visuels réduits<br>
+        ✓ RAM libérée automatiquement
+      </div>
+      <div class="toggle-row" style="margin-top:8px">
+        <span>📄 Mode Bureautique</span>
+        <label class="toggle">
+          <input type="checkbox" id="office-mode-toggle">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div id="office-mode-desc" style="font-size:11px;color:var(--text2);margin-top:6px;line-height:1.5;display:none">
+        ✓ Préchargement des pages<br>
+        ✓ Cache DNS optimisé<br>
+        ✓ Lecture fluide des documents
+      </div>
+    </div>
+
+    <!-- Mise à jour -->
+    <div class="sg" id="sg-update">
+      <div class="sg-title">🔄 Mises à jour</div>
+
+      <!-- Statut version -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:12px;color:var(--text2)">Version installée</div>
+        <strong id="current-version" style="font-size:12px;background:var(--bg);padding:2px 8px;border-radius:6px;border:1px solid var(--border)">1.0.0</strong>
+      </div>
+
+      <!-- Bannière nouvelle version -->
+      <div id="update-banner" class="update-banner hidden" style="margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="font-size:16px">🎉</span>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600" id="update-banner-version">Nouvelle version disponible !</div>
+            <div style="font-size:11px;color:var(--text2)" id="update-banner-text"></div>
+          </div>
+          <button id="btn-dismiss-update" title="Ignorer" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:14px;padding:2px 4px;border-radius:4px">✕</button>
+        </div>
+        <!-- Barre de progression -->
+        <div id="update-progress-wrap" style="display:none;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:4px">
+            <span>Téléchargement en cours…</span>
+            <span id="update-progress-pct">0%</span>
+          </div>
+          <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">
+            <div id="update-progress-bar" style="height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width .3s"></div>
+          </div>
+        </div>
+        <button id="btn-download-update" class="primary-btn" style="width:100%">
+          ⬇️ Télécharger et installer
+        </button>
+      </div>
+
+      <!-- À jour -->
+      <div id="update-ok-msg" style="display:none;font-size:12px;color:#4caf50;margin-bottom:8px;text-align:center">✓ Novyss est à jour !</div>
+
+      <!-- Bouton vérifier -->
+      <button id="btn-check-update" class="ghost-btn" style="width:100%">🔍 Vérifier les mises à jour</button>
+      <div style="font-size:10px;color:var(--text2);text-align:center;margin-top:6px">Vérifie automatiquement au démarrage</div>
+    </div>
+
+    <!-- À propos -->
+    <div class="sg">
+      <div class="sg-title">ℹ️ À propos</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6">
+        Novyss Browser <strong>v1.0.0 Beta</strong><br>
+        Créé par <strong>ib</strong> & <strong>43x</strong><br>
+        <a href="#" id="link-discord" style="color:var(--accent)">Discord : gg/Novyss</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ PANEL : COFFRE-FORT ══════════════════════════════════════ -->
+<div id="panel-vault" class="side-panel hidden" style="width:380px">
+
+  <!-- Écran de déverrouillage -->
+  <div id="vault-lock">
+    <div class="vl-inner">
+      <div class="vl-icon">🔐</div>
+      <div class="vl-title">Coffre-fort</div>
+      <div class="vl-sub" id="vl-sub">Entrez votre mot de passe maître</div>
+      <input id="master-input" type="password" class="vl-input" placeholder="Mot de passe maître…">
+      <p id="vl-error" class="vl-error"></p>
+      <button id="btn-vault-unlock" class="vl-btn">🔓 Déverrouiller</button>
+    </div>
+  </div>
+
+  <!-- Liste des entrées -->
+  <div id="vault-main" style="display:none;flex-direction:column;height:100%">
+    <div class="panel-hdr">
+      <span>🔑 Mots de passe</span>
+      <div style="display:flex;gap:6px">
+        <button class="icon-btn" id="btn-vault-add">＋</button>
+        <button class="icon-btn" id="btn-vault-lock">🔒</button>
+        <button class="panel-close" id="close-vault">✕</button>
+      </div>
+    </div>
+    <div class="panel-search">
+      <input id="vault-search" type="text" placeholder="Rechercher…">
+    </div>
+    <div id="vault-list"></div>
+    <div class="panel-footer">
+      <button class="ghost-btn" id="btn-change-master">🔑 Changer MDP maître</button>
+    </div>
+  </div>
+
+  <!-- Formulaire ajout/édition -->
+  <div id="vault-form" style="display:none;flex-direction:column;height:100%">
+    <div class="panel-hdr">
+      <span id="vf-title">Nouvelle entrée</span>
+      <button class="panel-close" id="close-vault-form">✕</button>
+    </div>
+    <div class="vf-body">
+      <div class="vf-field">
+        <label>Site</label>
+        <input id="vf-site" type="text" class="vf-input" placeholder="github.com">
+      </div>
+      <div class="vf-field">
+        <label>Identifiant</label>
+        <input id="vf-user" type="text" class="vf-input" placeholder="email@…">
+      </div>
+      <div class="vf-field">
+        <label>Mot de passe</label>
+        <div style="display:flex;gap:6px">
+          <input id="vf-pwd" type="password" class="vf-input" placeholder="••••••••">
+          <button class="icon-btn" id="btn-toggle-pwd">👁</button>
+          <button class="icon-btn" id="btn-gen-pwd">🎲</button>
+        </div>
+      </div>
+      <div class="vf-field">
+        <label>URL</label>
+        <input id="vf-url" type="text" class="vf-input" placeholder="https://…">
+      </div>
+    </div>
+    <div class="vf-footer">
+      <button id="btn-vf-save" class="save-btn">💾 Enregistrer</button>
+      <button id="btn-vf-cancel" class="cancel-btn">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOAST ═════════════════════════════════════════════════════ -->
+<div id="toast" class="hidden"></div>
+
+<!-- ══ MENU CONTEXTUEL ══════════════════════════════════════════ -->
+<div id="ctx-menu" class="ctx hidden">
+  <div class="ctx-item" data-a="new-tab">＋ Nouvel onglet</div>
+  <div class="ctx-item" data-a="duplicate">⧉ Dupliquer</div>
+  <div class="ctx-item" data-a="reload">↻ Recharger</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item ctx-ram" data-a="suspend">💤 Libérer la RAM</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item ctx-danger" data-a="close">✕ Fermer</div>
+  <div class="ctx-item ctx-danger" data-a="close-others">🗑 Fermer les autres</div>
+</div>
+
+<!-- ══ POPUP DÉTECTION MDP ══════════════════════════════════════ -->
+<div id="pwd-popup" class="hidden">
+  <div id="pwd-popup-inner">
+    <div id="pwd-popup-header">
+      <div id="pwd-popup-icon">🔑</div>
+      <div id="pwd-popup-text">
+        <div id="pwd-popup-title">Enregistrer le mot de passe ?</div>
+        <div id="pwd-popup-site"></div>
+      </div>
+      <button id="pwd-popup-dismiss">✕</button>
+    </div>
+    <div id="pwd-popup-fields">
+      <div class="pwd-field">
+        <span class="pwd-label">Identifiant</span>
+        <span class="pwd-val" id="pwd-popup-user"></span>
+      </div>
+      <div class="pwd-field">
+        <span class="pwd-label">Mot de passe</span>
+        <span class="pwd-val" id="pwd-popup-pwd">••••••••</span>
+        <button id="pwd-popup-toggle">👁</button>
+      </div>
+    </div>
+    <div id="pwd-popup-actions">
+      <button class="pwd-save-btn" id="pwd-popup-save">💾 Enregistrer</button>
+      <button class="pwd-ignore-btn" id="pwd-popup-ignore">Ignorer</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
