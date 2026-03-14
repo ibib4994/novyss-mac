@@ -10,13 +10,16 @@
     "build:mac": "electron-builder --mac",
     "build:all": "electron-builder --win --mac --x64"
   },
-  "build": {
-    "appId": "com.novyss.browser",
-    "productName": "Novyss",
-    "copyright": "© 2025 Novyss",
-    "directories": {
-      "output": "dist"
-    },
+"build": {
+  "appId": "com.novyss.browser",
+  "productName": "Novyss",
+  "copyright": "© 2025 Novyss",
+  "dmg": {
+    "writeUpdateInfo": false
+  },
+  "directories": {
+    "output": "dist"
+  },
     "files": [
       "main.js",
       "preload.js",
